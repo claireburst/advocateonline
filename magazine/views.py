@@ -23,7 +23,11 @@ from haystack.views import SearchView
 from haystack.forms import SearchForm
 from django.shortcuts import redirect
 from itertools import chain
+from googleapiclient.discovery import build
+import pprint
+from apiclient.discovery import build
 import logging
+import requests
 
 
 logger = logging.getLogger("magazine")
@@ -215,69 +219,36 @@ def singleissue(request, season, year):
 
   return render(request, template_name, data)
 
-class FilterSearchView(SearchView):
-        template_name = 'search/search.html'
-        queryset = SearchQuerySet().all()
-        form_class = SearchForm
-        type_filter = 'all'
+def search_page(request, type_filter = None):
+  search_query = request.GET.get('q', '')
+  response = requests.get("https://www.googleapis.com/customsearch/v1?key=AIzaSyDcjobZhFT8_Qb4LNy8obsN_hTsPVKeqCs&cx=003161123474920028412:gng49ulbtgy&q=" + search_query)
+  json = response.json()
+  data = {}
+  data['items'] = json['items']
+  data['queries'] = json['queries']
+  data['search_query'] = search_query 
 
-        def __call__(self, request, type_filter = None):
+  service = build("customsearch", "v1",
+            developerKey="AIzaSyDcjobZhFT8_Qb4LNy8obsN_hTsPVKeqCs")
 
-                self.request = request
+  res = service.cse().list(
+     q=search_query,
+     cx='003161123474920028412:gng49ulbtgy',
+     num=10, 
+  ).execute() 
 
-                self.form = self.build_form()
-                self.query = self.get_query()
-                self.results = self.get_results()
+  next_response = service.cse().list(
+     q=search_query,
+     cx='003161123474920028412:gng49ulbtgy',
+     num=10,
+     start=res['queries']['nextPage'][0]['startIndex'],
+  ).execute() 
 
-                if type_filter is not None:
-                        self.results = self.results.filter(section=type_filter)
-                        self.type_filter = type_filter
-                else:
-                        self.type_filter = 'all'
+  # This is the JSON data for the next page of results. Just needs to be implement in HTML
+  data['next'] = next_response
 
-                return self.create_response()
-
-        def extra_context(self):
-                return {'type_filter' : self.type_filter}
-
-        def create_response(self):
-                (pageinator, page) = self.build_page()
-
-                context = {
-                        'query' : self.query,
-                        'form' : self.form,
-                        'page' : page,
-                        'pageinator' : pageinator,
-                        'suggestion' : None,
-                }
-
-                context['suggestion'] = self.form.get_suggestion()
-
-                #for dict in Contributor.objects.all():
-                #        if (dict['name'] == self.query):
-                #                print dict
-
-                try:
-                        return redirect(Article.objects.get(title = self.query))
-                except Article.DoesNotExist:
-                        pass
-
-                try:
-                        return redirect(Contributor.objects.get(name = self.query))
-                except Contributor.DoesNotExist:
-                        pass
-                try:
-                        return redirect(Post.objects.get(title = self.query))
-                except Post.DoesNotExist:
-                        pass
-                try:
-                        return redirect(Author.objects.get(name = self.query))
-                except Author.DoesNotExist:
-                        pass
-
-                context.update(self.extra_context())
-                return render(self.query, self.template, context)
-
+  
+  return render(request, 'search/search.html', data)
 
 def subscribe(request):
   template_name = 'subscribe.html'
