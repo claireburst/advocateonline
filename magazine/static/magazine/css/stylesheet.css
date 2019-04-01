@@ -54,6 +54,12 @@ h3 {
 	text-align: center;
 }
 
+h4 {
+	font-family: 'league_gothicregular';
+	text-align: center;
+	font-size: 20px;
+}
+
 p {
 	font-family: Minion Pro Regular;
 	font-size: 16px;
