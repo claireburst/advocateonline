@@ -228,26 +228,25 @@ def search_page(request, type_filter = None):
   data['queries'] = json['queries']
   data['search_query'] = search_query 
 
-  service = build("customsearch", "v1",
-            developerKey="AIzaSyDcjobZhFT8_Qb4LNy8obsN_hTsPVKeqCs")
+  # service = build("customsearch", "v1",
+  #           developerKey="AIzaSyDcjobZhFT8_Qb4LNy8obsN_hTsPVKeqCs")
 
-  res = service.cse().list(
-     q=search_query,
-     cx='003161123474920028412:gng49ulbtgy',
-     num=10, 
-  ).execute() 
+  # res = service.cse().list(
+  #    q=search_query,
+  #    cx='003161123474920028412:gng49ulbtgy',
+  #    num=10, 
+  # ).execute() 
 
-  next_response = service.cse().list(
-     q=search_query,
-     cx='003161123474920028412:gng49ulbtgy',
-     num=10,
-     start=res['queries']['nextPage'][0]['startIndex'],
-  ).execute() 
+  # next_response = service.cse().list(
+  #    q=search_query,
+  #    cx='003161123474920028412:gng49ulbtgy',
+  #    num=10,
+  #    start=res['queries']['nextPage'][0]['startIndex'],
+  # ).execute() 
 
   # This is the JSON data for the next page of results. Just needs to be implement in HTML
-  data['next'] = next_response
+  # data['next'] = next_response
 
-  
   return render(request, 'search/search.html', data)
 
 def subscribe(request):
